@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Pong Game</title>
+    <script src="//cdn.jsdelivr.net/npm/phaser@3.11.0/dist/phaser.js"></script>
+    <style type="text/css">
+        body {
+            margin: 0;
+        }
+    </style>
+</head>
+
+<body>
+
+    <script type="text/javascript">
+
+        var config = {
+            type: Phaser.AUTO,
+            width: 800,
+            height: 600,
+            physics: {
+                default: 'arcade',
+                arcade: {
+                    debug: true
+                }
+            },
+            scene: {
+                preload: preload,
+                create: create,
+                update: update
+            }
+        };
+
+        var ball;
+        var cursors;
+        var platform1;
+        var platform2;
+        var background;
+        var puntsPlayer1 = 0;
+        var puntsPlayer2 = 0;
+        var text1;
+        var text2
+        var resize1 = 1;
+        var resize2 = 1;
+        var decrease;
+        var velBallX = 500;
+        var game = new Phaser.Game(config);
+
+        function preload() {
+            this.load.image('background', 'assets/background.png');
+            this.load.image('ball', 'assets/ball.png');
+            this.load.image('platform', 'assets/platform.png');
+
+        }
+
+        function create() {
+            background = this.add.image(400, 300, 'background');
+            ball = this.physics.add.image(400, 300, 'ball');
+            platform1 = this.physics.add.image(60, 300, 'platform');
+            platform2 = this.physics.add.image(740, 300, 'platform');
+            text1 = this.add.text(30, 30);
+            text2 = this.add.text(660, 30);
+
+            platform1.setImmovable(true);
+            platform1.setCollideWorldBounds(true);
+
+            platform2.setImmovable(true);
+            platform2.setCollideWorldBounds(true);
+
+            ball.setCollideWorldBounds(true);
+            ball.setBounce(1, 1);
+
+            this.physics.add.collider(ball, platform1, hitBall1);
+            this.physics.add.collider(ball, platform2, hitBall2);
+
+            // ASSIGN KEYBOARD 
+            cursors = this.input.keyboard.createCursorKeys();
+
+            this.keys = this.input.keyboard.addKeys({
+                s: Phaser.Input.Keyboard.KeyCodes.S,
+                w: Phaser.Input.Keyboard.KeyCodes.W
+            });
+
+            // TWEENS
+            // this.tweens.add({
+            //     targets: platform1,
+            //     scaleX: resize1,
+            //     scaleY: resize1,
+            //     ease: 'Power1',
+            //     duration: 1000
+            // })
+
+            // this.tweens.add({
+            //     targets: platform2,
+            //     scaleX: resize2,
+            //     scaleY: resize2,
+            //     ease: 'Power1',
+            //     duration: 1000
+            // })
+
+
+        }
+
+        function update() {
+
+            // COUNTER
+            text1.setText('Player 1: ' + puntsPlayer1);
+            text2.setText('Player 2: ' + puntsPlayer2);
+
+            // MOVEMENT PLATFORM 1
+            if (this.keys.w.isDown) {
+                platform1.setVelocityY(-500);
+            }
+            else if (this.keys.s.isDown) {
+                platform1.setVelocityY(500);
+            }
+            else {
+                platform1.setVelocityY(0);
+            }
+
+            // MOVEMENT PLATFORM 2
+            if (cursors.up.isDown) {
+                platform2.setVelocityY(-500);
+            }
+            else if (cursors.down.isDown) {
+                platform2.setVelocityY(500);
+            }
+            else {
+                platform2.setVelocityY(0);
+            }
+
+            // MOVEMENT BALL
+            if (cursors.space.isDown) {
+                ball.setVelocityX(600);
+                ball.setVelocityY(0);
+            }
+
+            // END ROW
+            if (ball.x >= 790 || ball.x <= 10) {
+
+                if (ball.x >= 790) {
+                    puntsPlayer1++
+                    resize1 -= 0.1;
+                } else if (ball.x <= 10) {
+                    puntsPlayer2++;
+                    resize2 -= 0.1;
+                }
+
+                this.scene.restart();
+            }
+
+            // FINISH GAME
+            if (puntsPlayer1 == 5 || puntsPlayer2 == 5) {
+                this.physics.pause();
+
+                hideShowScene(false);
+
+                if (puntsPlayer1 == 5) {
+                    this.add.text(185, 230, 'WINNER PLAYER 1').setFontSize(50);
+                } else {
+                    this.add.text(185, 230, 'WINNER PLAYER 2').setFontSize(50);
+                }
+
+                this.add.text(185, 280, 'Press SPACE to play again...').setFontSize(20);
+
+                if (cursors.space.isDown) {
+                    puntsPlayer1 = 0;
+                    puntsPlayer2 = 0;
+                    resize1 = 1;
+                    resize2 = 1;
+
+                    hideShowScene(true);
+
+                    this.scene.restart();
+                }
+            }
+
+        }
+
+        function hideShowScene(boolean) {
+            text1.setVisible(boolean);
+            text2.setVisible(boolean);
+            platform1.setVisible(boolean);
+            platform2.setVisible(boolean);
+            ball.setVisible(boolean);
+            background.setVisible(boolean);
+        }
+
+        function hitBall1() {
+            ball.setVelocityX(ball.body.velocity.x + 10);
+            console.log(ball.body.velocity.x);
+
+            if (ball.y >= platform1.y - 90 && ball.y < platform1.y - 68) {
+                ball.setVelocityY(-400);
+            } else if (ball.y >= platform1.y - 68 && ball.y < platform1.y - 46) {
+                ball.setVelocityY(-250);
+            } else if (ball.y >= platform1.y - 46 && ball.y < platform1.y - 24) {
+                ball.setVelocityY(-100);
+            } else if (ball.y >= platform1.y - 24 && ball.y < platform1.y + 24) {
+
+            } else if (ball.y >= platform1.y + 24 && ball.y < platform1.y + 46) {
+                ball.setVelocityY(100);
+            } else if (ball.y >= platform1.y + 46 && ball.y < platform1.y + 68) {
+                ball.setVelocityY(250);
+            } else if (ball.y >= platform1.y + 68 && ball.y < platform1.y + 90) {
+                ball.setVelocityY(400);
+            }
+        }
+
+        function hitBall2() {
+            ball.setVelocityX(ball.body.velocity.x - 10);
+            console.log(ball.body.velocity.x);
+
+            if (ball.y >= platform2.y - 90 && ball.y < platform2.y - 68) {
+                ball.setVelocityY(-400);
+            } else if (ball.y >= platform2.y - 68 && ball.y < platform2.y - 46) {
+                ball.setVelocityY(-250);
+            } else if (ball.y >= platform2.y - 46 && ball.y < platform2.y - 24) {
+                ball.setVelocityY(-100);
+                // } else if(ball.y >= platform2.y - 24 && ball.y < platform2.y + 24) {
+
+            } else if (ball.y >= platform2.y + 24 && ball.y < platform2.y + 46) {
+                ball.setVelocityY(100);
+            } else if (ball.y >= platform2.y + 46 && ball.y < platform2.y + 68) {
+                ball.setVelocityY(250);
+            } else if (ball.y >= platform2.y + 68 && ball.y < platform2.y + 90) {
+                ball.setVelocityY(400);
+            }
+        }
+
+    </script>
+</body>
